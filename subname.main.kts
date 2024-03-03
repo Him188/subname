@@ -36,15 +36,37 @@ data class EpisodeDetail(
     val original: File,
     val prefix: String,
     val episode: String,
-    val suffix: String
+    val suffix: String,
 )
 
+val File.extensionWithLanguage: String
+    get() {
+        val name = this.nameWithoutExtension
+        val index = name.lastIndexOf(".")
+        return if (index != -1 && name.lastIndex - index <= 4) {
+            name.substring(index + 1) + "." + this.extension
+        } else {
+            this.extension
+        }
+    }
+
+val File.nameWithoutExtensionAndLanguage: String
+    get() {
+        val name = this.nameWithoutExtension
+        val index = name.lastIndexOf(".")
+        return if (index != -1 && name.lastIndex - index <= 4) {
+            name.substring(0, index)
+        } else {
+            name
+        }
+    }
+
 fun extractEpisodeDetails(files: List<File>): List<EpisodeDetail> {
-    val prefix = findCommonPrefix(files.map { it.nameWithoutExtension })
-    val suffix = findCommonSuffix(files.map { it.nameWithoutExtension })
+    val prefix = findCommonPrefix(files.map { it.nameWithoutExtensionAndLanguage })
+    val suffix = findCommonSuffix(files.map { it.nameWithoutExtensionAndLanguage })
 
     return files.map { file ->
-        val episode = file.nameWithoutExtension.removePrefix(prefix).removeSuffix(suffix)
+        val episode = file.nameWithoutExtensionAndLanguage.removePrefix(prefix).removeSuffix(suffix)
         EpisodeDetail(original = file, prefix, episode, suffix)
     }
 }
@@ -70,5 +92,5 @@ for (subtitle in subtitles) {
            |   with: ${video.original}""".trimMargin()
     )
 
-    subtitle.original.renameTo(File("${video.original.parent}/${video.prefix}${video.episode}${video.suffix}.${subtitle.original.extension}"))
+    subtitle.original.renameTo(File("${video.original.parent}/${video.prefix}${video.episode}${video.suffix}.${subtitle.original.extensionWithLanguage}"))
 }
